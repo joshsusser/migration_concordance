@@ -33,7 +33,7 @@ Background
 
 MigrationConcordance works by taking a snapshot of the state of an appliation's migrations every
 time you run "rake db:migrate". It creates a file in db/migration_snapshot.yml that holds a list
-of all current migrations and their SHA-1 hashes. Therefore, if you migrate to a migration that is
+of all current migrations and their MD5 hashes. Therefore, if you migrate to a migration that is
 not the latest (using rake db:migrate VERSION=<version>), you won't get any more notifications
 even if you aren't on the latest version. It assumes you know what you are doing and won't keep
 nagging you to migrate after you've migrated somewhere already.

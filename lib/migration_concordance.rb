@@ -1,3 +1,4 @@
+require 'digest/md5'
 module ActiveRecord
   class Migrator
     class << self
@@ -43,7 +44,7 @@ module ActiveRecord
         files = Dir[File.join(migrations_path, "[0-9]*_*.rb")].collect { |n| File.basename(n) }
         snapshot = {}
         files.each do |file|
-          snapshot[File.basename(file, ".rb")] = Digest::SHA1.hexdigest(File.read(File.join(migrations_path, file)))
+          snapshot[File.basename(file, ".rb")] = Digest::MD5.hexdigest(File.read(File.join(migrations_path, file)))
         end
         snapshot
       end
