@@ -1,28 +1,41 @@
 MigrationConcordance
 ====================
 
-by Josh Susser, josh@hasmanythrough.com
+by Josh Susser <josh@hasmanythrough.com>
 
 project page: http://github.com/joshsusser/migration_concordance
 project repo: git://github.com/joshsusser/migration_concordance.git
 
-This plugin extends Rails migrations to provide notification when you need to run migrations.  It will detect both new migrations and modifications to previously run migrations.  It is primarily of use for team development, but is also useful when deploying a release to a new environment to determine when migrations need to be run.  This plugin does not run migrations automatically, but will notify you whenever you need to run them.
+This plugin extends Rails migrations to provide notification when you need to run migrations. It
+will detect both new migrations and modifications to previously run migrations. It is primarily of
+use for team development, but is also useful when deploying a release to a new environment to
+determine when migrations need to be run. This plugin does not run migrations automatically, but
+will notify you whenever you need to run them.
 
 To integrate with your application:
 
-1)  Add the following line to the end of your config/environment.rb file:
+1) Add the following line to the end of your config/environment.rb file:
 
     puts ActiveRecord::Migrator.check_concordance
 
-2)  Add the file db/migration_snapshot.yml to your SCM ignore list (for example, the svn:ignore property or .gitignore file).  Putting the snapshot file under version control defeats the whole purpose of this feature.
+2) Add the file db/migration_snapshot.yml to your SCM ignore list (for example, the svn:ignore
+property or .gitignore file). Putting the snapshot file under version control defeats the whole
+purpose of this feature.
 
-Any time you load your application's environment, it will indicate whether you need to run migrations to bring your schema into concordance with the migration files.  This notification will happen when you run script/server, tests, the console, or any rake task that depends on the environment.  If you want to check on migration status, you can run "rake environment" to print the notification.
-
+Any time you load your application's environment, it will indicate whether you need to run
+migrations to bring your schema into concordance with the migration files. This notification will
+happen when you run script/server, tests, the console, or any rake task that depends on the
+environment. If you want to check on migration status, you can run "rake environment" to print the
+notification.
 
 Background
 ==========
 
-MigrationConcordance works by taking a snapshot of the state of an appliation's migrations every time you run "rake db:migrate".  It creates a file in db/migration_snapshot.yml that holds a list of all current migrations and their SHA-1 hashes.  Therefore, if you migrate to a migration that is not the latest (using rake db:migrate VERSION=<version>), you won't get any more notifications even if you aren't on the latest version.  It assumes you know what you are doing and won't keep nagging you to migrate after you've migrated somewhere already.
-
+MigrationConcordance works by taking a snapshot of the state of an appliation's migrations every
+time you run "rake db:migrate". It creates a file in db/migration_snapshot.yml that holds a list
+of all current migrations and their SHA-1 hashes. Therefore, if you migrate to a migration that is
+not the latest (using rake db:migrate VERSION=<version>), you won't get any more notifications
+even if you aren't on the latest version. It assumes you know what you are doing and won't keep
+nagging you to migrate after you've migrated somewhere already.
 
 Copyright (c) 2008 Josh Susser, released under the MIT license
