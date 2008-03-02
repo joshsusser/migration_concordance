@@ -1,0 +1,7 @@
+puts ""
+puts "Migration Concordance plugin installed."
+puts "To integrate with your application, add the following line to the end of your config/environment.rb file:"
+puts "    puts ActiveRecord::Migrator.check_concordance"
+puts ""
+puts "You should also add the file db/migration_snapshot.yml to your SCM ignore list."
+puts ""
