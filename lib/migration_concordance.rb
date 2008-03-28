@@ -1,4 +1,22 @@
 require 'digest/md5'
+
+begin
+  require 'redgreen'
+  use_color = true
+rescue LoadError
+  use_color = false
+end
+
+if use_color
+  def red(str);     Color.red(str);     end
+  def green(str);   Color.green(str);   end
+  def yellow(str);  Color.yellow(str);  end
+else
+  def red(str);     str;  end
+  def green(str);   str;  end
+  def yellow(str);  str;  end
+end
+
 module ActiveRecord
   class Migrator
     class << self
@@ -6,11 +24,17 @@ module ActiveRecord
       def check_concordance
         case differs = self.current_differs_from_snapshot("db/migrate")
         when false
-          "***** DB schema is in sync with migrations."
+          green("***** DB schema is in sync with migrations.")
         when 0
-          "***** DB schema state unknown. No migration snapshot to compare."
+          yellow("***** DB schema state unknown. No migration snapshot to compare.")
         else
-          "***** DB schema needs to be migrated from: #{differs}"
+          changed = differs.split("_").first.to_i
+          current = current_version rescue 0
+          if changed < current
+            red("***** DB schema needs to be re-migrated from: #{differs}")
+          else
+            red("***** DB schema has new migrations - run 'rake db:migrate'")
+          end
         end
       end
 
