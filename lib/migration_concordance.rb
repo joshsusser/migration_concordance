@@ -22,7 +22,7 @@ module ActiveRecord
     class << self
 
       def check_concordance
-        case differs = self.current_differs_from_snapshot("db/migrate")
+        case differs = self.current_differs_from_snapshot(File.join(RAILS_ROOT,'db','migrate'))
         when false
           green("***** DB schema is in sync with migrations.")
         when 0
