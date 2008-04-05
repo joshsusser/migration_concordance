@@ -30,7 +30,7 @@ module ActiveRecord
         else
           changed = differs.split("_").first.to_i
           current = current_version rescue 0
-          if changed < current
+          if changed <= current
             red("***** DB schema needs to be re-migrated from: #{differs}")
           else
             red("***** DB schema has new migrations - run 'rake db:migrate'")
