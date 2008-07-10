@@ -1,16 +1,22 @@
 require 'digest/md5'
 
-begin
-  require 'redgreen'
-  mc_use_color = true
-rescue LoadError
-  mc_use_color = false
+module MCColor
+  COLORS = { :clear => 0, :red => 31, :green => 32, :yellow => 33 }
+  def self.color(color)
+    "\e[#{COLORS[color.to_sym]}m"
+  end
+  def self.colorize(color_name, str)
+    color(color_name) + str + color(:clear)
+  end
+  def self.red(str);      colorize(:red, str);      end
+  def self.green(str);    colorize(:green, str);    end
+  def self.yellow(str);   colorize(:yellow, str);   end
 end
 
-if mc_use_color && !ENV['TM_MODE']
-  def mc_red(str);     Color.red(str);     end
-  def mc_green(str);   Color.green(str);   end
-  def mc_yellow(str);  Color.yellow(str);  end
+unless ENV['TM_MODE']
+  def mc_red(str);     MCColor.red(str);     end
+  def mc_green(str);   MCColor.green(str);   end
+  def mc_yellow(str);  MCColor.yellow(str);  end
 else
   def mc_red(str);     str;  end
   def mc_green(str);   str;  end
