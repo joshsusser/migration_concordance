@@ -14,13 +14,9 @@ will notify you whenever you need to run them.
 
 To integrate with your application:
 
-1) Add the following line to the end of your config/environment.rb file:
+Add the following line to the end of your config/environment.rb file:
 
-    puts ActiveRecord::Migrator.check_concordance
-
-2) Add the file db/migration_snapshot.yml to your SCM ignore list (for example, the svn:ignore
-property or .gitignore file). Putting the snapshot file under version control defeats the whole
-purpose of this feature.
+    puts ActiveRecord::Migrator.new(:up, "#{RAILS_ROOT}/db/migrate").check_concordance
 
 Any time you load your application's environment, it will indicate whether you need to run
 migrations to bring your schema into concordance with the migration files. This notification will

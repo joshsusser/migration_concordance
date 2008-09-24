@@ -25,64 +25,61 @@ end
 
 module ActiveRecord
   class Migrator
-    class << self
 
-      def check_concordance
-        case differs = self.current_differs_from_snapshot(File.join(RAILS_ROOT,'db','migrate'))
-        when false
-          mc_green("***** DB schema is in sync with migrations.")
+    def check_concordance
+      differs = discordant_migrations
+      case differs.size
         when 0
-          mc_yellow("***** DB schema state unknown. No migration snapshot to compare.")
+          mc_green("***** No changes detected in previously applied migrations.")
         else
-          changed = differs.split("_").first.to_i
-          current = current_version rescue 0
-          if changed <= current
-            mc_red("***** DB schema needs to be re-migrated from: #{differs}")
-          else
-            mc_red("***** DB schema has new migrations - run 'rake db:migrate'")
+          migrated_versions = migrated.collect { |v| v.to_s }
+          differs.collect do |version|
+            if migrated_versions.include?(version)
+              filename = File.basename(Dir["#{@migrations_path}/#{version}_*.rb"].first)
+              mc_red("***** Detected change in previously applied migration: #{filename}")
+            end
           end
-        end
       end
-
-      def migrate_with_snapshot(migrations_path, target_version = nil)
-        if migrations_path =~ %r{vendor/plugins}
-          migrate_without_snapshot(migrations_path, target_version)
-        else
-          old_version = current_version rescue nil
-          migrate_without_snapshot(migrations_path, target_version)
-          if current_version != old_version
-            snapshot = generate_snapshot(migrations_path)
-            lines = YAML.dump(snapshot).split("\n").sort
-            File.open(snapshot_path, "w") { |f| f.puts(lines) }
-          end
-        end
-      end
-      alias_method_chain :migrate, :snapshot
-
-      def current_differs_from_snapshot(migrations_path)
-        if File.exists?(snapshot_path)
-          current = generate_snapshot(migrations_path)
-          snapshot = YAML.load_file(snapshot_path)
-          diff = current.diff(snapshot) 
-          diff.keys.empty? ? false : diff.keys.sort.first
-        else
-          0
-        end
-      end
-
-      def generate_snapshot(migrations_path)
-        files = Dir[File.join(migrations_path, "[0-9]*_*.rb")].collect { |n| File.basename(n) }
-        snapshot = {}
-        files.each do |file|
-          snapshot[File.basename(file, ".rb")] = Digest::MD5.hexdigest(File.read(File.join(migrations_path, file)))
-        end
-        snapshot
-      end
-
-      def snapshot_path
-        File.join(RAILS_ROOT, "db", "migration_snapshot.yml")
-      end
-
     end
+
+    def discordant_migrations
+      schema_entries.collect do |entry|
+        migration_hashcode(entry['version']) != entry['hashcode'] ? entry['version'] : nil
+      end.compact
+    end
+    
+    def schema_entries
+      Base.connection.select_all("SELECT * FROM #{self.class.schema_migrations_table_name}")
+    end
+
+    def migration_hashcode(version)
+      file = Dir[File.join(@migrations_path, "#{version}_*.rb")].first
+      Digest::MD5.hexdigest(File.read(file))
+    end
+
+    private
+
+    def record_version_state_after_migrating_with_hashcode(version)
+      record_version_state_after_migrating_without_hashcode(version)
+      if up?
+        ensure_schema_migrations_table_has_extra_columns!
+        update_version_hashcode(version)
+      end
+    end
+    alias_method_chain :record_version_state_after_migrating, :hashcode
+
+    def ensure_schema_migrations_table_has_extra_columns!
+      sm_table = self.class.schema_migrations_table_name
+      existing = Base.connection.columns(self.class.schema_migrations_table_name).collect { |c| c.name }
+      Base.connection.add_column(sm_table, 'hashcode', :string)       unless existing.include?('hashcode')
+      Base.connection.add_column(sm_table, 'migrated_at', :datetime)  unless existing.include?('migrated_at')
+      self.migrated.each { |version| update_version_hashcode(version) }
+    end
+
+    def update_version_hashcode(version)
+      hashcode = migration_hashcode(version)
+      Base.connection.update("UPDATE #{self.class.schema_migrations_table_name} SET hashcode='#{hashcode}',migrated_at='#{Time.now.to_s(:db)}' WHERE version='#{version}'")
+    end
+
   end
 end
